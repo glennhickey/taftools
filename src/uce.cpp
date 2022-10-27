@@ -160,7 +160,7 @@ void compute_taf_uces(FILE* input, std::ostream& os, int64_t min_len, int64_t mi
             for (int64_t col = 0; col < alignment->row->length; ++col) {
                 if (alignment->row->bases[col] != '-') {                
                     int64_t column_depth = 0;            
-                    if (sample_set.size() == samples.size()) {
+                    if (sample_set.size() == samples.size() && exclusion_set.empty()) {
                         // if we have no duplications, it's a simple count
                         for (Alignment_Row* row = alignment->row->n_row; row != NULL; row = row->n_row) {
                             if (toupper(row->bases[col]) == toupper(alignment->row->bases[col])) {
@@ -176,6 +176,11 @@ void compute_taf_uces(FILE* input, std::ostream& os, int64_t min_len, int64_t mi
                         for (Alignment_Row* row = alignment->row->n_row; row != NULL; row = row->n_row, ++row_i) {
                             if (toupper(row->bases[col]) == toupper(alignment->row->bases[col])) {
                                 string& sample = samples[row_i];
+                                if (exclusion_set.count(sample)) {
+                                    // we found an excluded sample, the column is void
+                                    column_depth = 0;
+                                    break;
+                                }
                                 if (!sample_set.count(sample)) {
                                     ++column_depth;
                                     sample_set.insert(sample);

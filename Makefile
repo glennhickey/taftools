@@ -24,3 +24,8 @@ src/uce.o: src/uce.hpp src/uce.cpp $(INC_DEPS)
 
 clean:
 	rm -rf bin/taftools src/*.o
+
+static:
+	CFLAGS="$${CFLAGS} -static" \
+	CXXFLAGS="$${CXXFLAGS} -static" \
+	${MAKE} all	
