@@ -1,0 +1,3 @@
+[submodule "deps/taf"]
+	path = deps/taf
+	url = https://github.com/ComparativeGenomicsToolkit/taf.git
