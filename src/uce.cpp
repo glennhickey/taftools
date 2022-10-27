@@ -46,7 +46,7 @@ int uce_main(int argc, char** argv) {
 
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "hi:m:d:",
+        c = getopt_long (argc, argv, "hi:m:d:x:",
                          long_options, &option_index);
 
         // Detect the end of the options.
