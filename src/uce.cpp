@@ -21,6 +21,7 @@ static void help(char** argv) {
        << "    -m, --min-length N                      Output regions must be at least N bp long [required]" << endl
        << "    -d, --min-depth F                       Output regions must be conserved in N samples [required]" << endl
        << "    -x, --exclude-sample                    Columns containing given sample are not considered conserved (multiple allowed)" << endl
+       << "    -p, --progress N                        Print update every N bases" << endl
        << endl;
 }    
 
@@ -30,6 +31,7 @@ int uce_main(int argc, char** argv) {
     int64_t min_uce_len = 0;
     int64_t min_uce_depth = 0;
     set<string> exclusion_set;
+    int64_t progress = 0;
     
     int c;
     optind = 1; 
@@ -41,12 +43,13 @@ int uce_main(int argc, char** argv) {
             {"min-length", required_argument, 0, 'm'},
             {"min-depth", required_argument, 0, 'd'},
             {"exclude-sample", required_argument, 0, 'x'},
+            {"progress", required_argument, 0, 'p'},            
             {0, 0, 0, 0}
         };
 
         int option_index = 0;
 
-        c = getopt_long (argc, argv, "hi:m:d:x:",
+        c = getopt_long (argc, argv, "hi:m:d:x:p:",
                          long_options, &option_index);
 
         // Detect the end of the options.
@@ -66,6 +69,9 @@ int uce_main(int argc, char** argv) {
             break;
         case 'x':
             exclusion_set.insert(optarg);
+            break;
+        case 'p':
+            progress = stol(optarg);
             break;
         case 'h':
         case '?':
@@ -96,7 +102,7 @@ int uce_main(int argc, char** argv) {
     }
 
     // compute the uces, printing to stdout
-    compute_taf_uces(input, cout, min_uce_len, min_uce_depth, exclusion_set);
+    compute_taf_uces(input, cout, min_uce_len, min_uce_depth, exclusion_set, progress);
     
     if (input != NULL) {
         fclose(input);
@@ -105,7 +111,8 @@ int uce_main(int argc, char** argv) {
     return 0;
 }
 
-void compute_taf_uces(FILE* input, std::ostream& os, int64_t min_len, int64_t min_depth, const set<string>& exclusion_set) {
+void compute_taf_uces(FILE* input, std::ostream& os, int64_t min_len, int64_t min_depth,
+                      const set<string>& exclusion_set, int64_t progress_interval) {
     // make the iterator
     LI *li = LI_construct(input);
 
@@ -113,6 +120,8 @@ void compute_taf_uces(FILE* input, std::ostream& os, int64_t min_len, int64_t mi
     stList *tags = taf_read_header(li);
     assert(stList_length(tags) % 2 == 0);
 
+    int64_t total_columns_scanned = 0;
+    
     // keep track of curent uce
     string uce_contig;
     int64_t uce_start = -1;
@@ -213,6 +222,11 @@ void compute_taf_uces(FILE* input, std::ostream& os, int64_t min_len, int64_t mi
                     }
                     ++ref_offset;
                 }
+                if (progress_interval > 0 && total_columns_scanned % progress_interval == 0) {
+                    cerr << "[uce] Current position " << alignment->row->sequence_name << " " << ref_offset << " after "
+                         << total_columns_scanned << " scanned columns" << endl;
+                }
+                ++total_columns_scanned;
             }
         }
                         
